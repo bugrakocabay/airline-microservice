@@ -16,7 +16,6 @@ func main() {
 
 	log.Printf("Starting API-Gateway on port %s\n", webPort)
 
-	//listenAddr := net.JoinHostPort("localhost", webPort)
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
