@@ -4,7 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 )
+
+type userResponse struct {
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Token     string `json:"token"`
+}
 
 func (app *Config) authenticate(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
@@ -14,27 +23,39 @@ func (app *Config) authenticate(w http.ResponseWriter, r *http.Request) {
 
 	err := app.readJSON(w, r, &requestPayload)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
 	valid, err := user.PasswordMatches(requestPayload.Password)
 	if err != nil || !valid {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		_ = app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
+	}
+
+	userId := strconv.Itoa(user.ID)
+	token, err := app.tokenMaker.CreateToken(userId, user.Email, time.Hour)
+	if err != nil || !valid {
+		_ = app.errorJSON(w, errors.New("token error"), http.StatusInternalServerError)
 		return
 	}
 
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in as user: %s", user.Email),
-		Data:    user,
+		Data: userResponse{
+			Email:     user.Email,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Token:     token,
+		},
 	}
 
-	app.writeJSON(w, http.StatusOK, payload)
+	_ = app.writeJSON(w, http.StatusOK, payload)
 }

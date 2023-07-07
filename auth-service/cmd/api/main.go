@@ -8,10 +8,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/bugrakocabay/airline/auth-service/data"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
+
+	"github.com/bugrakocabay/airline/auth-service/cmd/token"
+	"github.com/bugrakocabay/airline/auth-service/data"
 )
 
 const webPort = "80"
@@ -19,8 +21,9 @@ const webPort = "80"
 var counts int64
 
 type Config struct {
-	DB     *sql.DB
-	Models data.Models
+	DB         *sql.DB
+	Models     data.Models
+	tokenMaker token.Maker
 }
 
 func main() {
@@ -30,9 +33,12 @@ func main() {
 	if conn == nil {
 		log.Panic("Can't connect to Postgres!")
 	}
+
+	tokenMaker, err := token.NewPasetoMaker("12345678901234567890123456789012")
 	app := Config{
-		DB:     conn,
-		Models: data.New(conn),
+		DB:         conn,
+		Models:     data.New(conn),
+		tokenMaker: tokenMaker,
 	}
 
 	srv := &http.Server{
@@ -40,7 +46,7 @@ func main() {
 		Handler: app.routes(),
 	}
 
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
 	}
