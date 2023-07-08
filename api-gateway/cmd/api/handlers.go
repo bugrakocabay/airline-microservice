@@ -25,15 +25,6 @@ type CreateUserPayload struct {
 	Lastname  string `json:"lastname" binding:"required"`
 }
 
-func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
-	payload := jsonResponse{
-		Error:   false,
-		Message: "OK",
-	}
-
-	_ = app.writeJSON(w, http.StatusOK, payload)
-}
-
 func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RequestPayload
 

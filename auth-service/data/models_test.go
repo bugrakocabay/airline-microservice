@@ -221,7 +221,7 @@ func TestInsertUser(t *testing.T) {
 
 	m := New(db)
 
-	id, err := m.User.Insert(*mockUser)
+	id, err := m.User.Insert(mockUser.Email, mockUser.Password, mockUser.FirstName, mockUser.LastName)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
