@@ -200,11 +200,11 @@ func (u *User) DeleteByID(id int) error {
 }
 
 // Insert inserts a new user into the database, and returns the ID of the newly inserted row
-func (u *User) Insert(user User) (int, error) {
+func (u *User) Insert(email, password, firstname, lastname string) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
 		return 0, err
 	}
@@ -214,11 +214,11 @@ func (u *User) Insert(user User) (int, error) {
 		values ($1, $2, $3, $4, $5, $6, $7) returning id`
 
 	err = db.QueryRowContext(ctx, stmt,
-		user.Email,
-		user.FirstName,
-		user.LastName,
+		email,
+		firstname,
+		lastname,
 		hashedPassword,
-		user.Active,
+		1,
 		time.Now(),
 		time.Now(),
 	).Scan(&newID)
