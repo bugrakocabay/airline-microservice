@@ -3,8 +3,11 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type jsonResponse struct {
@@ -65,4 +68,20 @@ func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) er
 	payload.Message = err.Error()
 
 	return app.writeJSON(w, statusCode, payload)
+}
+
+func (app *Config) validate(payload interface{}) error {
+	validate := validator.New()
+	err := validate.Struct(payload)
+	if err != nil {
+		errSlice := make([]string, 0)
+		for _, err := range err.(validator.ValidationErrors) {
+			errSlice = append(errSlice, err.Field())
+		}
+		errString := strings.Join(errSlice, ", ")
+
+		return errors.New(fmt.Sprintf("Missing field(s): %s", errString))
+	}
+
+	return nil
 }

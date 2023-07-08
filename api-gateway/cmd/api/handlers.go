@@ -106,15 +106,18 @@ func (app *Config) createUser(w http.ResponseWriter, a CreateUserPayload) {
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != http.StatusCreated {
-		_ = app.errorJSON(w, errors.New("error calling auth service"))
-		return
-	}
-
 	var jsonFromService jsonResponse
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
 		_ = app.errorJSON(w, err)
+		return
+	}
+
+	if response.StatusCode == http.StatusBadRequest {
+		_ = app.errorJSON(w, errors.New(jsonFromService.Message))
+		return
+	} else if response.StatusCode != http.StatusCreated {
+		_ = app.errorJSON(w, errors.New("error calling auth service"))
 		return
 	}
 

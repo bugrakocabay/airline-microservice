@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -18,11 +17,17 @@ type userResponse struct {
 
 func (app *Config) authenticate(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email    string `json:"email" validate:"required"`
+		Password string `json:"password" validate:"required"`
 	}
 
 	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = app.validate(requestPayload)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -62,10 +67,10 @@ func (app *Config) authenticate(w http.ResponseWriter, r *http.Request) {
 }
 
 type CreateUserRequest struct {
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	Firstname string `json:"firstname" binding:"required"`
-	Lastname  string `json:"lastname" binding:"required"`
+	Email     string `json:"email" validate:"required"`
+	Password  string `json:"password" validate:"required"`
+	Firstname string `json:"firstname" validate:"required"`
+	Lastname  string `json:"lastname" validate:"required"`
 }
 
 type NewUserResponse struct {
@@ -79,6 +84,12 @@ func (app *Config) createUser(w http.ResponseWriter, r *http.Request) {
 	var requestPayload CreateUserRequest
 
 	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		_ = app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = app.validate(requestPayload)
 	if err != nil {
 		_ = app.errorJSON(w, err, http.StatusBadRequest)
 		return
@@ -101,7 +112,9 @@ func (app *Config) createUser(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	log.Println(payload)
-
 	_ = app.writeJSON(w, http.StatusCreated, payload)
+}
+
+func (app *Config) getUserById(h http.ResponseWriter, w *http.Request) {
+
 }
