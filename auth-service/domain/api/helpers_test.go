@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestReadJSON(t *testing.T) {
-	app := Config{}
+	app := &AuthHandler{}
 	jsonData := `{"key":"value"}`
 	req, err := http.NewRequest("POST", "/", bytes.NewBufferString(jsonData))
 	if err != nil {
@@ -54,7 +54,7 @@ func TestReadJSON(t *testing.T) {
 }
 
 func TestWriteJSON(t *testing.T) {
-	app := &Config{}
+	app := &AuthHandler{}
 	w := httptest.NewRecorder()
 
 	data := map[string]string{
@@ -81,7 +81,7 @@ func TestWriteJSON(t *testing.T) {
 }
 
 func TestErrorJSON(t *testing.T) {
-	app := &Config{}
+	app := &AuthHandler{}
 	w := httptest.NewRecorder()
 
 	err := app.errorJSON(w, errors.New("test error"))

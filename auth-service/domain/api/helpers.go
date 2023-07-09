@@ -1,13 +1,14 @@
-package main
+package api
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type jsonResponse struct {
@@ -16,7 +17,8 @@ type jsonResponse struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
-func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
+// readJSON reads JSON body into data variable.
+func (app *AuthHandler) readJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	maxBytes := 1048576
 
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
@@ -35,7 +37,8 @@ func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data interfa
 	return nil
 }
 
-func (app *Config) writeJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
+// writeJSON returns given JSON response.
+func (app *AuthHandler) writeJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
 	out, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -57,7 +60,8 @@ func (app *Config) writeJSON(w http.ResponseWriter, status int, data interface{}
 	return nil
 }
 
-func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) error {
+// errorJSON returns given JSON error response.
+func (app *AuthHandler) errorJSON(w http.ResponseWriter, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 	if len(status) > 0 {
 		statusCode = status[0]
@@ -70,7 +74,9 @@ func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) er
 	return app.writeJSON(w, statusCode, payload)
 }
 
-func (app *Config) validate(payload interface{}) error {
+// TODO: Write test for this.
+// validate validates given payload.
+func (app *AuthHandler) validate(payload interface{}) error {
 	validate := validator.New()
 	err := validate.Struct(payload)
 	if err != nil {

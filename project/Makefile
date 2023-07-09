@@ -28,5 +28,5 @@ build_api_gateway:
 
 build_auth:
 	@echo "Building auth binary..."
-	cd ../auth-service && env GOOS=linux CGO_ENABLED=0 go build -o ${AUTH_BINARY} ./cmd/api
+	cd ../auth-service && env GOOS=linux CGO_ENABLED=0 go build -o ${AUTH_BINARY} .
 	@echo "Done!"

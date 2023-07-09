@@ -1,66 +1,71 @@
-package data
+package pg_repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 	"time"
 
+	"github.com/bugrakocabay/airline/auth-service/domain/ports"
+
+	"github.com/jackc/pgx/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
+type PgUserRepository struct {
+	Conn *pgx.Conn
+}
+
 const dbTimeout = time.Second * 3
 
-var db *sql.DB
+// Insert inserts a new user into the database, and returns the ID of the newly inserted row
+func (u *PgUserRepository) Insert(email, password, firstname, lastname string) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
 
-// New is the function used to create an instance of the data package. It returns the type
-// Model, which embeds all the types we want to be available to our application.
-func New(dbPool *sql.DB) Models {
-	db = dbPool
-
-	return Models{
-		User: User{},
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return 0, err
 	}
-}
 
-// Models is the type for this package. Note that any model that is included as a member
-// in this type is available to us throughout the application, anywhere that the
-// app variable is used, provided that the model is also added in the New function.
-type Models struct {
-	User User
-}
+	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at, updated_at)
+		values ($1, $2, $3, $4, $5, $6, $7) returning id`
 
-// User is the structure which holds one user from the database.
-type User struct {
-	ID        int       `json:"id"`
-	Email     string    `json:"email"`
-	FirstName string    `json:"first_name,omitempty"`
-	LastName  string    `json:"last_name,omitempty"`
-	Password  string    `json:"-"`
-	Active    int       `json:"active"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	var newID int
+	err = u.Conn.QueryRow(ctx, stmt,
+		email,
+		firstname,
+		lastname,
+		hashedPassword,
+		1,
+		time.Now(),
+		time.Now(),
+	).Scan(&newID)
+	if err != nil {
+		return 0, err
+	}
+
+	return newID, nil
 }
 
 // GetAll returns a slice of all users, sorted by last name
-func (u *User) GetAll() ([]*User, error) {
+func (u *PgUserRepository) GetAll() ([]*ports.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at
 	from users order by last_name`
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := u.Conn.Query(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var users []*User
+	var users []*ports.User
 
 	for rows.Next() {
-		var user User
+		var user ports.User
 		err := rows.Scan(
 			&user.ID,
 			&user.Email,
@@ -83,14 +88,14 @@ func (u *User) GetAll() ([]*User, error) {
 }
 
 // GetByEmail returns one user by email
-func (u *User) GetByEmail(email string) (*User, error) {
+func (u *PgUserRepository) GetByEmail(email string) (*ports.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where email = $1`
 
-	var user User
-	row := db.QueryRowContext(ctx, query, email)
+	var user ports.User
+	row := u.Conn.QueryRow(ctx, query, email)
 
 	err := row.Scan(
 		&user.ID,
@@ -111,14 +116,14 @@ func (u *User) GetByEmail(email string) (*User, error) {
 }
 
 // GetOne returns one user by id
-func (u *User) GetOne(id int) (*User, error) {
+func (u *PgUserRepository) GetOne(id int) (*ports.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where id = $1`
 
-	var user User
-	row := db.QueryRowContext(ctx, query, id)
+	var user ports.User
+	row := u.Conn.QueryRow(ctx, query, id)
 
 	err := row.Scan(
 		&user.ID,
@@ -138,9 +143,8 @@ func (u *User) GetOne(id int) (*User, error) {
 	return &user, nil
 }
 
-// Update updates one user in the database, using the information
-// stored in the receiver u
-func (u *User) Update() error {
+// Update updates one user in the database
+func (u *PgUserRepository) Update(email, firstname, lastname string, active, id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -153,13 +157,13 @@ func (u *User) Update() error {
 		where id = $6
 	`
 
-	_, err := db.ExecContext(ctx, stmt,
-		u.Email,
-		u.FirstName,
-		u.LastName,
-		u.Active,
+	_, err := u.Conn.Exec(ctx, stmt,
+		email,
+		firstname,
+		lastname,
+		active,
 		time.Now(),
-		u.ID,
+		id,
 	)
 
 	if err != nil {
@@ -169,69 +173,23 @@ func (u *User) Update() error {
 	return nil
 }
 
-// Delete deletes one user from the database, by User.ID
-func (u *User) Delete() error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	stmt := `delete from users where id = $1`
-
-	_, err := db.ExecContext(ctx, stmt, u.ID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // DeleteByID deletes one user from the database, by ID
-func (u *User) DeleteByID(id int) error {
+func (u *PgUserRepository) DeleteByID(id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	stmt := `delete from users where id = $1`
 
-	_, err := db.ExecContext(ctx, stmt, id)
+	_, err := u.Conn.Exec(ctx, stmt, id)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-// Insert inserts a new user into the database, and returns the ID of the newly inserted row
-func (u *User) Insert(email, password, firstname, lastname string) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
-	if err != nil {
-		return 0, err
-	}
-
-	var newID int
-	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, $6, $7) returning id`
-
-	err = db.QueryRowContext(ctx, stmt,
-		email,
-		firstname,
-		lastname,
-		hashedPassword,
-		1,
-		time.Now(),
-		time.Now(),
-	).Scan(&newID)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return newID, nil
 }
 
 // ResetPassword is the method we will use to change a user's password.
-func (u *User) ResetPassword(password string) error {
+func (u *PgUserRepository) ResetPassword(password string, id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -241,7 +199,7 @@ func (u *User) ResetPassword(password string) error {
 	}
 
 	stmt := `update users set password = $1 where id = $2`
-	_, err = db.ExecContext(ctx, stmt, hashedPassword, u.ID)
+	_, err = u.Conn.Exec(ctx, stmt, hashedPassword, id)
 	if err != nil {
 		return err
 	}
@@ -252,8 +210,8 @@ func (u *User) ResetPassword(password string) error {
 // PasswordMatches uses Go's bcrypt package to compare a user supplied password
 // with the hash we have stored for a given user in the database. If the password
 // and hash match, we return true; otherwise, we return false.
-func (u *User) PasswordMatches(plainText string) (bool, error) {
-	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainText))
+func (u *PgUserRepository) PasswordMatches(plainText, savedPassword string) (bool, error) {
+	err := bcrypt.CompareHashAndPassword([]byte(savedPassword), []byte(plainText))
 	if err != nil {
 		switch {
 		case errors.Is(err, bcrypt.ErrMismatchedHashAndPassword):

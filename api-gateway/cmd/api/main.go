@@ -14,7 +14,7 @@ type Config struct {
 func main() {
 	app := Config{}
 
-	log.Printf("Starting API-Gateway on port %s\n", webPort)
+	log.Printf("Starting API-Gateway on ports %s\n", webPort)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
