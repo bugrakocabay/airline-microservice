@@ -25,7 +25,7 @@ type CreateUserPayload struct {
 	Lastname  string `json:"lastname" binding:"required"`
 }
 
-func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
+func (app *Config) HandleAuthSubmission(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RequestPayload
 
 	err := app.readJSON(w, r, &requestPayload)
