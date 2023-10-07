@@ -1,8 +1,9 @@
 package main
 
 import (
-	middleware2 "github.com/bugrakocabay/airline/api-gateway/cmd/middleware"
 	"net/http"
+
+	middleware2 "github.com/bugrakocabay/airline/api-gateway/cmd/middleware"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -10,12 +11,12 @@ import (
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 
+	mux.Post("/auth", app.HandleAuthSubmission)
+
 	mux.Group(func(r chi.Router) {
 		r.Use(middleware2.AuthMiddleware)
 		r.Mount("/handle", app.handleRouter())
 	})
-
-	mux.Post("/auth", app.HandleAuthSubmission)
 
 	return mux
 }
