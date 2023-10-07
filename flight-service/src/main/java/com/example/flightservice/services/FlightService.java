@@ -6,9 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Date;
+import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 public class FlightService {
@@ -30,23 +33,19 @@ public class FlightService {
     public Iterable<Flight> searchFlight(
             String arrival,
             String departure,
-            java.util.Date from,
-            java.util.Date to
-    ) throws ParseException {
-        java.sql.Date fromDateSql = null;
-        java.sql.Date toDateSql = null;
+            Date from,
+            Date to) {
+        String fromString = null;
+        String toString = null;
 
-        // Convert "from" string and "to" string to Date objects
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if (from != null) {
-            // java.util.Date fromDateUtil = dateFormat.parse(from);
-            fromDateSql = new java.sql.Date(from.getTime());
+            fromString = formatter.format(from);
         }
         if (to != null) {
-            // java.util.Date toDateUtil = dateFormat.parse(to);
-            toDateSql = new java.sql.Date(to.getTime());
+            toString = formatter.format(to);
         }
 
-        return flightRepository.findFlightsByOptionalParams(arrival, departure, fromDateSql, toDateSql);
+        return flightRepository.findFlightsByOptionalParams(arrival, departure, fromString, toString);
     }
 }

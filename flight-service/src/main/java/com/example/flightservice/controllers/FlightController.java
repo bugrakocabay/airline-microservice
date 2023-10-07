@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @RestController
@@ -32,7 +34,7 @@ public class FlightController {
             @RequestParam(required = false) String arrival,
             @RequestParam(required = false) String departure,
             @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date from,
-            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date to) throws ParseException {
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date to) {
         return new ResponseEntity<>(
                 flightService.searchFlight(arrival, departure, from, to),
                 null,
