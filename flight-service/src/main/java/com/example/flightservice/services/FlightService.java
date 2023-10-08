@@ -1,5 +1,6 @@
 package com.example.flightservice.services;
 
+import com.example.flightservice.dtos.responses.BaseResponse;
 import com.example.flightservice.models.Flight;
 import com.example.flightservice.repositories.FlightRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,5 +69,10 @@ public class FlightService {
                     return flightRepository.save(existingFlight);
                 })
                 .orElse(null);
+    }
+
+    @Transactional
+    public void deleteFlightById(Integer id) {
+        flightRepository.deleteById(id);
     }
 }
