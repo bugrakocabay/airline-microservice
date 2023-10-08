@@ -6,12 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 @Service
 public class FlightService {
@@ -47,5 +45,28 @@ public class FlightService {
         }
 
         return flightRepository.findFlightsByOptionalParams(arrival, departure, fromString, toString);
+    }
+
+    @Transactional
+    public Flight getFlightById(Integer id) {
+        return flightRepository.findById(id).orElse(null);
+    }
+
+    @Transactional
+    public Flight updateFlightById(Integer id, Flight flight) {
+        return flightRepository.findById(id)
+                .map(existingFlight -> {
+                    Optional.ofNullable(flight.getArrivalAirport()).ifPresent(existingFlight::setArrivalAirport);
+                    Optional.ofNullable(flight.getDepartureAirport()).ifPresent(existingFlight::setDepartureAirport);
+                    Optional.ofNullable(flight.getDeparture()).ifPresent(existingFlight::setDeparture);
+                    Optional.ofNullable(flight.getArrival()).ifPresent(existingFlight::setArrival);
+                    Optional.ofNullable(flight.getAvailableSeats()).ifPresent(existingFlight::setAvailableSeats);
+                    Optional.ofNullable(flight.getPrice()).ifPresent(existingFlight::setPrice);
+                    Optional.ofNullable(flight.getCapacity()).ifPresent(existingFlight::setCapacity);
+                    Optional.ofNullable(flight.getStatus()).ifPresent(existingFlight::setStatus);
+
+                    return flightRepository.save(existingFlight);
+                })
+                .orElse(null);
     }
 }

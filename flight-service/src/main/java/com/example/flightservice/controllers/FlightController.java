@@ -8,9 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @RestController
@@ -40,5 +37,15 @@ public class FlightController {
                 null,
                 HttpStatus.OK
         );
+    }
+
+    @GetMapping("/flight/{id}")
+    public ResponseEntity<Flight> getFlightById(@PathVariable Integer id) {
+        return new ResponseEntity<>(flightService.getFlightById(id), null, HttpStatus.OK);
+    }
+
+    @PutMapping("/flight/{id}")
+    public ResponseEntity<Flight> updateFlightById(@PathVariable Integer id, @RequestBody Flight flight) {
+        return new ResponseEntity<>(flightService.updateFlightById(id, flight), null, HttpStatus.OK);
     }
 }

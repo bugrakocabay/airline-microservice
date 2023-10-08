@@ -36,9 +36,9 @@ public class Flight {
     private int aircraftId;
 
     @Column(name = "available_seats")
-    private int availableSeats;
+    private Integer availableSeats;
 
     private String status;
-    private int capacity;
-    private int price;
+    private Integer capacity;
+    private Integer price;
 }

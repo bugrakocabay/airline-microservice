@@ -5,9 +5,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-import java.sql.Timestamp;
-import java.util.Date;
-
 public interface FlightRepository extends CrudRepository<Flight, Integer> {
 
     @Query("SELECT f FROM Flight f " +
