@@ -31,19 +31,13 @@ public class FlightController {
 
     @PostMapping("/flight")
     public ResponseEntity<BaseResponse<Flight>> createFlight(@RequestBody Flight flight) {
-        Flight createdFlight = flightService.createFlight(flight);
+        BaseResponse<Flight> response = BaseResponse.<Flight>builder()
+                .error(false)
+                .message("OK")
+                .data(flightService.createFlight(flight))
+                .build();
 
-        if (createdFlight != null) {
-            BaseResponse<Flight> response = BaseResponse.<Flight>builder()
-                    .error(false)
-                    .message("OK")
-                    .data(createdFlight)
-                    .build();
-
-            return new ResponseEntity<>(response, null, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>(response, null, HttpStatus.CREATED);
     }
 
     @GetMapping("/flight/search")
@@ -65,56 +59,61 @@ public class FlightController {
     public ResponseEntity<BaseResponse<Flight>> getFlightById(@PathVariable Integer id) {
         Flight flight = flightService.getFlightById(id);
 
-        if (flight != null) {
-            BaseResponse<Flight> response = BaseResponse.<Flight>builder()
-                    .error(false)
-                    .message("OK")
-                    .data(flight)
-                    .build();
-
-            return new ResponseEntity<>(response, null, HttpStatus.OK);
-        } else {
+        if (flight == null) {
             BaseResponse<Flight> response = BaseResponse.<Flight>builder()
                     .error(true)
                     .message("Flight not found")
-                    .data(null)
                     .build();
             return new ResponseEntity<>(response, null, HttpStatus.NOT_FOUND);
         }
+
+        BaseResponse<Flight> response = BaseResponse.<Flight>builder()
+                .error(false)
+                .message("OK")
+                .data(flight)
+                .build();
+        return new ResponseEntity<>(response, null, HttpStatus.OK);
     }
 
     @PutMapping("/flight/{id}")
     public ResponseEntity<BaseResponse<Flight>> updateFlightById(@PathVariable Integer id, @RequestBody Flight flight) {
         Flight updatedFlight = flightService.updateFlightById(id, flight);
 
-        if (updatedFlight != null) {
-            BaseResponse<Flight> response = BaseResponse.<Flight>builder()
-                    .error(false)
-                    .message("OK")
-                    .data(updatedFlight)
-                    .build();
-
-            return new ResponseEntity<>(response, null, HttpStatus.OK);
-        } else {
+        if (updatedFlight == null) {
             BaseResponse<Flight> response = BaseResponse.<Flight>builder()
                     .error(true)
                     .message("Flight not found")
-                    .data(null)
                     .build();
             return new ResponseEntity<>(response, null, HttpStatus.NOT_FOUND);
         }
+
+        BaseResponse<Flight> response = BaseResponse.<Flight>builder()
+                .error(false)
+                .message("OK")
+                .data(updatedFlight)
+                .build();
+        return new ResponseEntity<>(response, null, HttpStatus.OK);
     }
 
     @DeleteMapping("/flight/{id}")
     public ResponseEntity<BaseResponse<Flight>> deleteFlightById(@PathVariable Integer id) {
+        Flight flight = flightService.getFlightById(id);
+
+        if (flight == null) {
+            BaseResponse<Flight> response = BaseResponse.<Flight>builder()
+                    .error(true)
+                    .message("Flight not found")
+                    .build();
+            return new ResponseEntity<>(response, null, HttpStatus.NOT_FOUND);
+        }
+
         flightService.deleteFlightById(id);
 
         BaseResponse<Flight> response = BaseResponse.<Flight>builder()
                 .error(false)
                 .message("OK")
-                .data(null)
+                .data(flight)
                 .build();
-
         return new ResponseEntity<>(response, null, HttpStatus.OK);
     }
 }
