@@ -1,5 +1,6 @@
 package com.example.flightservice.controllers;
 
+import com.example.flightservice.dtos.requests.CreateFlightRequest;
 import com.example.flightservice.dtos.responses.BaseResponse;
 import com.example.flightservice.models.Flight;
 import com.example.flightservice.services.FlightService;
@@ -30,7 +31,7 @@ public class FlightController {
     }
 
     @PostMapping("/flight")
-    public ResponseEntity<BaseResponse<Flight>> createFlight(@RequestBody Flight flight) {
+    public ResponseEntity<BaseResponse<Flight>> createFlight(@RequestBody CreateFlightRequest flight) {
         BaseResponse<Flight> response = BaseResponse.<Flight>builder()
                 .error(false)
                 .message("OK")

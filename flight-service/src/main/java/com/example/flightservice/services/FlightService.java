@@ -1,6 +1,7 @@
 package com.example.flightservice.services;
 
-import com.example.flightservice.dtos.responses.BaseResponse;
+import com.example.flightservice.dtos.requests.CreateFlightRequest;
+import com.example.flightservice.models.Aircraft;
 import com.example.flightservice.models.Flight;
 import com.example.flightservice.repositories.FlightRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ public class FlightService {
 
     @Autowired
     private FlightRepository flightRepository;
+    @Autowired
+    private AircraftService aircraftService;
 
     @Transactional
     public Iterable<Flight> getAllFlights() {
@@ -24,8 +27,26 @@ public class FlightService {
     }
 
     @Transactional
-    public Flight createFlight(Flight flight) {
-        return flightRepository.save(flight);
+    public Flight createFlight(CreateFlightRequest flight) {
+        Aircraft aircraft = aircraftService.getAircraftById(flight.getAircraftId());
+        if (aircraft == null) {
+            return null;
+        }
+
+        return flightRepository.save(
+                Flight.builder()
+                        .flightNumber(flight.getFlightNumber())
+                        .departureAirport(flight.getDepartureAirport())
+                        .arrivalAirport(flight.getArrivalAirport())
+                        .arrival(flight.getArrival())
+                        .departure(flight.getDeparture())
+                        .aircraft(aircraft)
+                        .availableSeats(flight.getAvailableSeats())
+                        .status(flight.getStatus())
+                        .capacity(flight.getCapacity())
+                        .price(flight.getPrice())
+                        .build()
+        );
     }
 
     @Transactional
