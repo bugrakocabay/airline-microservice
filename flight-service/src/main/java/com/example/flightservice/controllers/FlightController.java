@@ -32,13 +32,23 @@ public class FlightController {
 
     @PostMapping("/flight")
     public ResponseEntity<BaseResponse<Flight>> createFlight(@RequestBody CreateFlightRequest flight) {
+        Flight createdFlight = flightService.createFlight(flight);
+
+        if (createdFlight == null) {
+            BaseResponse<Flight> errorResponse = BaseResponse.<Flight>builder()
+                    .error(true)
+                    .message("Aircraft not found")
+                    .build();
+
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
         BaseResponse<Flight> response = BaseResponse.<Flight>builder()
                 .error(false)
                 .message("OK")
-                .data(flightService.createFlight(flight))
+                .data(createdFlight)
                 .build();
 
-        return new ResponseEntity<>(response, null, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/flight/search")

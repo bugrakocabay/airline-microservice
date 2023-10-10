@@ -27,7 +27,7 @@ public class FlightService {
     }
 
     @Transactional
-    public Flight createFlight(CreateFlightRequest flight) {
+    public Flight createFlight(CreateFlightRequest flight)  {
         Aircraft aircraft = aircraftService.getAircraftById(flight.getAircraftId());
         if (aircraft == null) {
             return null;
