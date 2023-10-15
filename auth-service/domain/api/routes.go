@@ -1,20 +1,24 @@
 package api
 
 import (
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 // Routes is responsible for routing handlers.
 func (app *AuthHandler) Routes() http.Handler {
-	mux := chi.NewRouter()
+	mux := http.NewServeMux()
 
-	mux.Use(middleware.Heartbeat("/ping"))
+	handleFunc := func(pattern string, handlerFunc func(http.ResponseWriter, *http.Request)) {
+		// Configure the "http.route" for the HTTP instrumentation.
+		handler := otelhttp.WithRouteTag(pattern, http.HandlerFunc(handlerFunc))
+		mux.Handle(pattern, handler)
+	}
 
-	mux.Post("/create", app.createUser)
-	mux.Post("/authenticate", app.authenticate)
+	handleFunc("/create", app.createUser)
+	handleFunc("/authenticate", app.authenticate)
 
-	return mux
+	handler := otelhttp.NewHandler(mux, "/")
+
+	return handler
 }
