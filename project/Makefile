@@ -1,5 +1,6 @@
 API_GATEWAY_BINARY=apiGatewayApp
 AUTH_BINARY=authApp
+COLLECTOR_BINARY=collectorApp
 
 ## up: starts all containers in the background without forcing build
 up:
@@ -8,7 +9,7 @@ up:
 	@echo "Docker images started!"
 
 ## up_build: stops docker-compose (if running), builds all projects and starts docker compose
-up_build: build_api_gateway build_auth
+up_build: build_api_gateway build_auth build_collector
 	@echo "Stopping docker images (if running...)"
 	docker-compose down
 	@echo "Building (when required) and starting docker images..."
@@ -29,4 +30,9 @@ build_api_gateway:
 build_auth:
 	@echo "Building auth binary..."
 	cd ../auth-service && env GOOS=linux CGO_ENABLED=0 go build -o ${AUTH_BINARY} .
+	@echo "Done!"
+
+build_collector:
+	@echo "Building collector binary..."
+	cd ../collector && env GOOS=linux CGO_ENABLED=0 go build -o ${COLLECTOR_BINARY} .
 	@echo "Done!"
