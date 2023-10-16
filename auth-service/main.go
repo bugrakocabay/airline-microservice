@@ -20,7 +20,7 @@ import (
 const webPort = "80"
 
 func main() {
-	log.Printf("Starting Auth Service on ports %s\n", webPort)
+	log.Printf("Starting Auth Service on port %s\n", webPort)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
